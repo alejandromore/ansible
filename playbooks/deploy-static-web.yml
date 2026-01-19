@@ -1,0 +1,51 @@
+---
+- name: Deploy Static Web to Huawei OBS
+  hosts: obs
+  gather_facts: true
+  vars:
+    obsutil_cmd: "{{ ansible_env.HOME }}/bin/obsutil"
+    frontend_dir: "{{ playbook_dir }}/../files/static-web/"
+    bucket_url: "obs://obs-front-end-alejandro/"
+
+  tasks:
+    - name: Verificar si obsutil existe
+      ansible.builtin.stat:
+        path: "{{ obsutil_cmd }}"
+      register: obsutil_stat
+
+    - name: Instalar obsutil si no existe
+      ansible.builtin.shell: |
+        curl -L -O https://obs-community.obs.eu-west-101.myhuaweicloud.eu/obsutil/current/obsutil_linux_amd64.tar.gz
+        tar -zxvf obsutil_linux_amd64.tar.gz
+        mkdir -p ~/bin
+        mv obsutil_linux_amd64_*/obsutil ~/bin/obsutil
+        rm -rf obsutil_linux_amd64_*/ obsutil_linux_amd64.tar.gz
+      args:
+        creates: "{{ obsutil_cmd }}"
+      environment:
+        PATH: "{{ ansible_env.HOME }}/bin:{{ ansible_env.PATH }}"
+      when: not obsutil_stat.stat.exists
+
+    - name: Configurar obsutil
+      ansible.builtin.shell: "{{ obsutil_cmd }} config -i {{ obs_access_key }} -k {{ obs_secret_key }} -e {{ obs_endpoint }}"
+      args:
+        creates: "{{ ansible_env.HOME }}/.obsutilcfg"
+
+    - name: Listar contenido de static-web
+      find:
+        paths: "{{ frontend_dir }}"
+        recurse: yes
+      register: static_web_files
+
+    - name: Subir archivos 
+      ansible.builtin.shell: >
+        {{ obsutil_cmd }} cp -r -f --acl public-read
+        "{{ item.path }}"
+        "{{ bucket_url }}"
+        -meta "ContentDisposition:inline"
+      loop: "{{ static_web_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+
+

@@ -1,0 +1,8 @@
+[app]
+app-server-01 ansible_host=110.238.69.203
+
+[db]
+app-server-01
+
+[obs]
+localhost ansible_connection=local

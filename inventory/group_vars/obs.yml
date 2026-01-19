@@ -1,0 +1,7 @@
+# group_vars/obs.yml
+obs_access_key: "HPUABUW13WZRYQAKBDPL"
+obs_secret_key: "aJOPOIDbHKyzfi1HPZgLvWfuBMieX3wGi4qmi9DF"
+obs_endpoint: "obs.la-south-2.myhuaweicloud.com"
+obs_bucket: "obs-front-end-alejandro"
+
+

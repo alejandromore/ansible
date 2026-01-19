@@ -1,0 +1,108 @@
+---
+- name: Desplegar aplicación Java en Huawei Cloud
+  hosts: app
+  become: true
+  gather_facts: true
+  
+  vars:
+    app_install_dir: "/opt/{{ app_name }}"
+    app_user: "{{ app_name }}"
+    jar_source_path: "{{ playbook_dir }}/../files/app/{{ app_jar_name }}"
+
+  pre_tasks:
+    - name: Remove old SSH host key
+      known_hosts:
+        name: "{{ ansible_host }}"
+        state: absent
+      delegate_to: localhost
+      become: false
+
+    - name: Add new SSH host key
+      known_hosts:
+        name: "{{ ansible_host }}"
+        key: "{{ lookup('pipe', 'ssh-keyscan -H ' + ansible_host) }}"
+      delegate_to: localhost
+      become: false
+
+  tasks:
+    - name: Actualizar cache de paquetes
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+  
+    - name: Instalar dependencias del sistema
+      apt:
+        name:
+          - openjdk-{{ java_version }}-jdk
+          - curl
+          - net-tools
+        state: present
+             
+    - name: Crear usuario {{ app_user }}
+      user:
+        name: "{{ app_user }}"
+        system: yes
+        shell: /usr/sbin/nologin
+        create_home: no
+
+    - name: Copiar JAR a servidor
+      copy:
+        src: "{{ jar_source_path }}"
+        dest: "{{ app_install_dir }}/"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+        
+    - name: Crear directorios de la aplicación
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+      loop:
+        - "{{ app_install_dir }}"
+        - "{{ app_install_dir }}/logs"
+        
+    - name: Crear servicio systemd desde template
+      template:
+        src: "../templates/service.j2"
+        dest: /etc/systemd/system/{{ app_name }}.service
+        owner: root
+        group: root
+        mode: '0644'
+        
+    - name: Recargar systemd y habilitar servicio
+      systemd:
+        name: "{{ app_name }}"
+        enabled: yes
+        state: started
+        daemon_reload: yes
+        
+    - name: Esperar que aplicación inicie (puerto {{ app_port }})
+      wait_for:
+        port: "{{ app_port }}"
+        state: started
+        delay: 5
+        timeout: 60
+        
+    - name: Verificar salud de la aplicación
+      uri:
+        url: "http://localhost:{{ app_port }}{{ app_endpoint }}"
+        method: GET
+        status_code: 200
+        timeout: 10
+      register: health_result
+      retries: 3
+      delay: 5
+        
+    - name: Mostrar resultado
+      debug:
+        msg: "Aplicación {{ app_name }} desplegada en puerto {{ app_port }}"
+      when: health_result.status == 200
+        
+  handlers:
+    - name: restart app
+      systemd:
+        name: "{{ app_name }}"
+        state: restarted

@@ -1,0 +1,60 @@
+---
+- name: Restore PostgreSQL RDS
+  hosts: db
+  gather_facts: no
+
+  vars:
+    jar_source_path: "{{ playbook_dir }}/../files/db/{{ db_dump_file }}"
+
+  pre_tasks:
+    - name: Remove old SSH host key
+      known_hosts:
+        name: "{{ ansible_host }}"
+        state: absent
+      delegate_to: localhost
+      become: false
+
+    - name: Add new SSH host key
+      known_hosts:
+        name: "{{ ansible_host }}"
+        key: "{{ lookup('pipe', 'ssh-keyscan -H ' + ansible_host) }}"
+      delegate_to: localhost
+      become: false
+      
+  tasks:
+    - name: Instalar dependencias del sistema
+      apt:
+        name: 
+         - postgresql-client
+         - python3-psycopg2
+        update_cache: yes
+
+    - name: Copy database dump to remote server
+      copy:
+       src: "{{ jar_source_path }}"
+       dest: "/tmp/{{ db_dump_file }}"
+       mode: '0644'
+
+    - name: Restore database
+      community.postgresql.postgresql_db:
+        name: "{{ db_name }}"
+        login_host: "{{ db_host }}"
+        login_port: "{{ db_port }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        state: restore
+        target: "/tmp/{{ db_dump_file }}"
+
+    - name: Obtener cantidad de registros en clientes
+      community.postgresql.postgresql_query:
+        login_host: "{{ db_host }}"
+        login_port: "{{ db_port }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        db: "{{ db_name }}"
+        query: "SELECT COUNT(*) AS total FROM dummy_data.cliente;"
+      register: clientes_count
+
+    - name: Mostrar cantidad de registros
+      debug:
+        msg: "📊 La tabla clientes tiene {{ clientes_count.query_result[0].total }} registros"
