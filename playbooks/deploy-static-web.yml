@@ -37,15 +37,18 @@
         recurse: yes
       register: static_web_files
 
-    - name: Subir archivos 
-      ansible.builtin.shell: >
-        {{ obsutil_cmd }} cp -r -f --acl public-read
-        "{{ item.path }}"
-        "{{ bucket_url }}"
-        -meta "ContentDisposition:inline"
+    - name: Subir archivos HTML con metadata
+      ansible.builtin.shell: |
+        {{ obsutil_cmd }} cp -r -f --acl private \
+          "{{ item.path }}" \
+          "{{ bucket_url }}{{ item.path | basename }}" \
       loop: "{{ static_web_files.files }}"
-      loop_control:
-        label: "{{ item.path }}"
 
-
+#         -meta "ContentEncoding:UTF-8" \
+#         -meta "ContentDisposition:inline" \
+#      loop: "{{ static_web_files.files | selectattr('path', 'regex', '\\.(html|htm)$') }}"
+#      loop_control:
+#        label: "HTML: {{ item.path | basename }}"
+#     when: static_web_files.files | selectattr('path', 'regex', '\\.(html|htm)$') | list | length > 0
+#      when: static_web_files.files | rejectattr('path', 'regex', '\\.(html|htm)$') | list | length > 0
 

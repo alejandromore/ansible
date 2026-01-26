@@ -1,8 +1,15 @@
-[app]
-app-server-01 ansible_host=110.238.69.203
+[bastion]
+ecs-bastion ansible_host=101.44.13.58
 
-[db]
-app-server-01
+[app]
+ecs-private ansible_host=10.1.75.68 ansible_port=22 ansible_ssh_common_args='-o ForwardAgent=yes -o ProxyJump=root@101.44.13.58'
+
+[db_restore]
+ecs-bastion
 
 [obs]
 localhost ansible_connection=local
+
+[all:vars]
+ansible_user=root
+ansible_ssh_private_key_file=~/.ssh/ky-ecs-private.pem
