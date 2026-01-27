@@ -2,10 +2,12 @@
 ecs-bastion ansible_host=101.44.13.58
 
 [app]
-ecs-private ansible_host=10.1.75.68 ansible_port=22 ansible_ssh_common_args='-o ForwardAgent=yes -o ProxyJump=root@101.44.13.58'
+#ecs-private ansible_host=10.1.75.68 ansible_port=22 ansible_ssh_common_args='-o ForwardAgent=yes -o ProxyJump=root@101.44.13.58'
+ecs-public ansible_host=110.238.69.203
 
 [db_restore]
-ecs-bastion
+#ecs-bastion
+localhost
 
 [obs]
 localhost ansible_connection=local

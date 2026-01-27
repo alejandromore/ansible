@@ -6,6 +6,7 @@ ansible --version
 #copiar archivo pem
 ls -l ~/.ssh/
 cp /mnt/d/Genesis/Terraform/huaweicloud-terraform/examples/app-obs-dew-ecs-rds/keys/*.pem ~/.ssh/
+cp ./files/keys/*.pem ~/.ssh/
 chmod 600 ~/.ssh/*.pem
 true > ~/.ssh/known_hosts
 
@@ -25,10 +26,13 @@ ansible -i inventory/hosts all -m ping
 ssh-agent bash
 ssh-add -l
 ssh-add ~/.ssh/ky-ecs-private.pem
+ssh-add ~/.ssh/id_rsa_ecs.pem
 #conecta al servidor bastion
-ssh root@101.44.13.58
+ssh root@110.238.65.22
 #conecta usando -A para forward del agente:
 ssh -A root@101.44.13.58 -t ssh root@10.1.75.68
+
+ssh -i ~/.ssh/id_rsa_ecs.pem root@110.238.65.22
 
 mkdir ~/java-debs
 cd ~/java-debs
@@ -47,10 +51,14 @@ obsutil version:5.4.11, obssdk version:2.2.12
 
 http://182.160.24.235:8080/clientes
 http://110.238.69.203:8080/dew-info
+http:/110.238.69.203:8080/healthCheck
 curl http:/110.238.69.203:8080/healthCheck
 curl http:/localhost:8080/dew-info
 curl http:/localhost:8080/healthCheck
 curl http:/localhost:8080/clientes
+
+curl http://101.44.13.58:8080/healthCheck
+curl http://101.44.13.58:8080/clientes
 
 
 https://obs-front-end-alejandro.obs.la-south-2.myhuaweicloud.com/index.html
