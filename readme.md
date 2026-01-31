@@ -1,9 +1,12 @@
 
 WSL
+wsl -u root
+wsl -l -v
 cd /mnt/d/Genesis/Ansible
 ansible --version
 
 #copiar archivo pem
+rm ~/.ssh/*.pem
 ls -l ~/.ssh/
 cp /mnt/d/Genesis/Terraform/huaweicloud-terraform/examples/app-obs-dew-ecs-rds/keys/*.pem ~/.ssh/
 cp ./files/keys/*.pem ~/.ssh/
@@ -25,14 +28,14 @@ ansible -i inventory/hosts all -m ping
 #agrega tu llave al agente SSH en tu laptop
 ssh-agent bash
 ssh-add -l
-ssh-add ~/.ssh/ky-ecs-private.pem
+ssh-add ~/.ssh/*.pem
 ssh-add ~/.ssh/id_rsa_ecs.pem
 #conecta al servidor bastion
-ssh root@110.238.65.22
+ssh root@101.44.13.58
 #conecta usando -A para forward del agente:
 ssh -A root@101.44.13.58 -t ssh root@10.1.75.68
 
-ssh -i ~/.ssh/id_rsa_ecs.pem root@110.238.65.22
+ssh -i ~/.ssh/*.pem root@101.44.13.58
 
 mkdir ~/java-debs
 cd ~/java-debs
@@ -51,7 +54,7 @@ obsutil version:5.4.11, obssdk version:2.2.12
 
 http://182.160.24.235:8080/clientes
 http://110.238.69.203:8080/dew-info
-http:/110.238.69.203:8080/healthCheck
+http:/110.238.65.22:8080/healthCheck
 curl http:/110.238.69.203:8080/healthCheck
 curl http:/localhost:8080/dew-info
 curl http:/localhost:8080/healthCheck
