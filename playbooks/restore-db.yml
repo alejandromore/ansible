@@ -1,20 +1,13 @@
 ---
 - name: Restore PostgreSQL RDS
   hosts: db_restore
-  become: true
+  become: false
   gather_facts: false
 
   vars:
     dump_src: "{{ playbook_dir }}/../files/db/{{ db_dump_file }}"
 
   tasks:
-    - name: Instalar dependencias
-      apt:
-        name:
-          - postgresql-client
-          - python3-psycopg2
-        update_cache: yes
-
     - name: Copiar dump
       copy:
         src: "{{ dump_src }}"
